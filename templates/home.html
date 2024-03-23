@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    This is my homepage
+    <form action = "{% url 'predict' %}">
+
+
+        { % csrf_token %}
+
+        Enter URL : <input type = "text" name = "url"  required>
+
+        <input type = "submit" value = "Submit" name="">
+
+    </form>
+</body>
+</html>
+
+
