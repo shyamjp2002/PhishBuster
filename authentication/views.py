@@ -1,6 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect,render
 import joblib
 from urllib.parse import urlparse,urlencode
@@ -13,17 +12,23 @@ from datetime import datetime
 import requests
 from django.contrib.auth.models import User
 from django.contrib import messages
+import json
 
 
 # Create your views here.
 def home(request):
     return render(request, 'index.html')
+def home1(request):
+    return render(request, 'home1.html')
   
 def usecases(request):
     return render(request, 'usecases.html')
   
 def info(request):
     return render(request, 'info.html')
+  
+def login(request):
+    return render(request, 'login.html')
   
 
 def signup(request):
@@ -39,7 +44,7 @@ def signup(request):
     return redirect('signin')
     
   
-  return render(request, 'authentication/signup.html')
+  return render(request, 'signup.html')
 
 
 
@@ -50,48 +55,79 @@ def signout(request):
     pass
 
 
-def predict(request):
-    
-    cls = joblib.load('xgboost.sav')
-    lis = []
-    lis.append(havingIP(request.GET['url']))
-    lis.append(haveAtSign(request.GET['url']))
-    lis.append(getLength(request.GET['url']))
-    lis.append(getDepth(request.GET['url']))
-    lis.append(redirection(request.GET['url']))
-    lis.append(httpDomain(request.GET['url']))
-    
-    lis.append(tinyURL(request.GET['url']))
-    lis.append(prefixSuffix(request.GET['url']))
-    
-    
-    dns = 0
-    try:
-        domain_name = whois.whois(urlparse(request.GET['url']).netloc)
-    except:
-        dns = 1
+import json
 
-    lis.append(dns)
-    lis.append(1 if dns == 1 else domainAge(domain_name))
-    lis.append(1 if dns == 1 else domainEnd(domain_name))
+def predict(request):
+    if request.method == 'POST':
+        # Retrieve the URL from the POST data
+        
+        js = json.loads(request.body.decode('utf-8'))
+        url = js.get('url')
+        print("URL:", url) 
+        
+        
+        # Load the trained model
+        cls = joblib.load('xgboost.sav')
+        
+        # Initialize a list to store feature values
+        lis = []
+        
+        # Extract features from the URL
+        lis.append(havingIP(url))
+        lis.append(haveAtSign(url))
+        lis.append(getLength(url))
+        lis.append(getDepth(url))
+        lis.append(redirection(url))
+        lis.append(httpDomain(url))
+        lis.append(tinyURL(url))
+        lis.append(prefixSuffix(url))
+        
+        # Check if domain information is accessible
+        dns = 0
+        try:
+            domain_name = whois.whois(urlparse(url).netloc)
+        except:
+            dns = 1
+        
+        # Append domain-related features to the list
+        lis.append(dns)
+        lis.append(1 if dns == 1 else domainAge(domain_name))
+        lis.append(1 if dns == 1 else domainEnd(domain_name))
+        
+        # Extract HTML & JavaScript-based features
+        try:
+            response = requests.get(url)
+        except:
+            response = ""
+        lis.append(iframe(response))
+        lis.append(mouseOver(response))
+        lis.append(rightClick(response))
+        lis.append(forwarding(response))
+        
+        print(lis)   # Print the list of feature values
+        
+        # Make predictions using the trained model
+        ans = cls.predict([lis])
+        prediction = int(ans[0])
+        lis.insert(0, getDomain(url))
+        print(ans)  # Print the prediction
+        print(lis)
+        print(prediction)
+        data = {
+        "success": True,
+        "detection": lis,
+        "prediction": prediction
+    }
+        print(data)
+        # Return the rendered HTML template
+        return JsonResponse(data)
+    else:
+        # Handle cases where the request method is not POST
+        # This block will be executed for GET requests
+        return HttpResponse("This view only accepts POST requests")
     
-    # HTML & Javascript based features (4)
-    try:
-        response = requests.get(request.GET['url'])
-    except:
-        response = ""
-    lis.append(iframe(response))
-    lis.append(mouseOver(response))
-    lis.append(rightClick(response))
-    lis.append(forwarding(response))
-    print(lis)   
-    ans = cls.predict([lis])
-    print(ans)
     
-    
-    
-    
-    return render(request,'predict.html')
+
 
 
 #Feature extraction methods
