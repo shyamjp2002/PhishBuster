@@ -11,13 +11,18 @@ import urllib.request
 from datetime import datetime
 import requests
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 import json
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
+
+@login_required(login_url='/signin')
 def home(request):
     return render(request, 'index.html')
+  
 def home1(request):
     return render(request, 'home1.html')
   
@@ -27,36 +32,87 @@ def usecases(request):
 def info(request):
     return render(request, 'info.html')
   
-def login(request):
-    return render(request, 'login.html')
-  
+
 
 def signup(request):
-  if request.method == 'POST':
-    username = request.POST['username']
-    email = request.POST['email']
-    pass1 = request.POST['pass1']
-    pass2 = request.POST['pass2']
-    myuser = User.objects.create_user(username, email, pass1)
-    myuser.save()
-    
-    messages.success(request, "Your account has been successfully created")
-    return redirect('signin')
-    
-  
-  return render(request, 'signup.html')
+    if request.method == "POST":
+        username = request.POST['username']
+        email = request.POST['email']
+        pass1 = request.POST['pass1']
+        pass2 = request.POST['pass2']
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exist! Please try some other username.")
+            return redirect('signup')
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email Already Registered!!")
+            return redirect('signup')
+        
+        if len(username)>20:
+            messages.error(request, "Username must be under 20 charcters!!")
+            return redirect('signup')
+        
+        if pass1 != pass2:
+            messages.error(request, "Passwords didn't matched!!")
+            return redirect('signup')
+        
+        if not username.isalnum():
+            messages.error(request, "Username must be Alpha-Numeric!!")
+            return redirect('signup')
+        
+        myuser = User.objects.create_user(username, email, pass1)
+        # myuser.is_active = False
+        
+        myuser.save()
+        messages.success(request, "Your Account has been created succesfully!! Please check your email to confirm your email address in order to activate your account.")
+        
+        # Welcome Email
+        
+        return redirect('signin')
+        
+        
+    return render(request, "signup.html")
 
 
+
+
+
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 def signin(request):
-    return render(request, 'authentication/signin.html')
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(username=username, password=password)
+        print(user)
+        
+        if user is not None:
+            login(request, user)  # Pass the user object to the login function
+            print("User logged in")
+            return render(request, "index.html", {"username": user.username})
+        else:
+            messages.error(request, "Invalid username or password")
+            print("User not logged in")
+            return redirect('signin')
+    
+    # If the request method is not POST or authentication fails, render the login form again.
+    return render(request, "login.html")
+
+
 
 def signout(request):
-    pass
+    logout(request)
+    messages.success(request, "Logged Out Successfully!!")
+    return redirect('signin')
 
 
-import json
 
+
+@login_required(login_url='/signup')
 def predict(request):
     if request.method == 'POST':
         # Retrieve the URL from the POST data
