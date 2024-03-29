@@ -15,6 +15,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 import json
 from django.contrib.auth.decorators import login_required
+from .forms import PredictionForm
+from django.utils import timezone
 
 
 # Create your views here.
@@ -93,7 +95,7 @@ def signin(request):
         if user is not None:
             login(request, user)  # Pass the user object to the login function
             print("User logged in")
-            return render(request, "index.html", {"username": user.username})
+            return redirect('home')
         else:
             messages.error(request, "Invalid username or password")
             print("User not logged in")
@@ -112,7 +114,7 @@ def signout(request):
 
 
 
-@login_required(login_url='/signup')
+
 def predict(request):
     if request.method == 'POST':
         # Retrieve the URL from the POST data
@@ -175,6 +177,18 @@ def predict(request):
         "prediction": prediction
     }
         print(data)
+        
+        form = PredictionForm({'url': url, 'is_phishing': prediction, 'username': request.user.username})
+
+        # Validate the form
+        if form.is_valid():
+            # Save the prediction data to the database
+            form.instance.time_stamp = timezone.now()
+            form.save()
+            print("Prediction data saved successfully.")
+        else:
+            # If the form is not valid, return an error response
+            print("Error saving prediction data.")
         # Return the rendered HTML template
         return JsonResponse(data)
     else:
