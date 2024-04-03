@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import redirect,render
 import joblib
 from urllib.parse import urlparse,urlencode
@@ -17,6 +17,9 @@ import json
 from django.contrib.auth.decorators import login_required
 from .forms import PredictionForm
 from django.utils import timezone
+from .models import PredictionHistory, ReportedURL
+import uuid
+
 
 
 # Create your views here.
@@ -33,6 +36,44 @@ def usecases(request):
   
 def info(request):
     return render(request, 'info.html')
+  
+def urlhistory(request):
+    return render(request, 'urlhistory.html')
+
+def gethistory(request):
+    
+        # Fetch link history data for the current user
+        link_history = PredictionHistory.objects.filter(username=request.user.username).values('username', 'url', 'time_stamp','is_phishing')
+        print
+        # Convert QuerySet to list of dictionaries
+        link_history_data = list(link_history)
+        print(link_history_data)
+        # Return the link history data as JSON response
+        return JsonResponse(link_history_data, safe=False)
+   
+        # Return error response if the request method is not POST
+        
+from django.http import HttpResponseBadRequest
+
+def reporturl(request):
+    if request.method == 'POST':
+        js = json.loads(request.body.decode('utf-8'))
+        url = js.get('url')
+        print(url)
+        if not url:
+            return HttpResponseBadRequest("URL is required")  # Return a 400 Bad Request response if URL is not provided
+        
+        # Generate a unique ID
+        unique_id = uuid.uuid4().hex[:10]  # Generate a 10-character unique ID
+        # Insert the URL and other fields into the database
+        ReportedURL.objects.create(url=url, username=request.user.username, unique_id=unique_id)
+        print("URL reported successfully.")
+        # Redirect to the safe browsing report page
+        return redirect('https://safebrowsing.google.com/safebrowsing/report_phish/?hl=en')
+    else:
+        # Handle other HTTP methods if needed
+        return HttpResponseNotAllowed(['POST'])
+
   
 
 

@@ -68,6 +68,12 @@
               <!-- <li><a href="#">For Future Reference</a></li> -->
             </ul>
           </li>
+          <li class="drop-down"><a>Profile</a>
+            <ul>
+            <li><a href="/profile">View Profile</a></li>
+            <li><a href="/signout">Logout</a></li>
+            </ul>
+          </li>
           <!-- <li><a href="#">Future Reference</a></li> -->
 
         </ul>
@@ -390,8 +396,10 @@
   <!-- Template Main JS File -->
   <script src="{% static 'assets/js/main.js' %}"></script>
   <script>
+    let predictedURL = "";
     function predictURL() {
       var url = document.getElementById('url').value;
+      predictedURL = url;
       if (url == "") {
         alert("ENTER A URL");
       } else {
@@ -422,7 +430,7 @@
                     predictionResult.innerHTML = '<span class="badge text-bg-success">Legitimate</span>';
                 } 
                 if (data.prediction == 1){
-                    predictionResult.innerHTML = '<span class="badge text-bg-danger">Phishing</span>';
+                    predictionResult.innerHTML = '<span class="badge text-bg-danger">Phishing</span><a href="https://safebrowsing.google.com/safebrowsing/report_phish/?hl=en"> <button type="button" onclick="reportPhishing()" class="btn btn-link">Report</button></a>';
                 }
                 
                 // DOMAIN
@@ -565,6 +573,30 @@
 
 
     }
+
+    function reportPhishing() {
+      // Make an AJAX request to the Django view with the predicted URL data
+      var csrftoken = getCookie('csrftoken');
+      fetch("http://127.0.0.1:8000/reporturl", {
+          method: 'POST',
+          headers: {
+            Accept: "application/json",
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken, // Ensure CSRF token is included
+          },
+          body: JSON.stringify({ url: predictedURL }), // Send predicted URL data in JSON format
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error('Failed to report phishing');
+          }
+          // Redirect the user to the Safe Browsing report page
+          
+      })
+      .catch(error => {
+          console.error('Error reporting phishing:', error.message);
+      });
+  }
 
 
     function getCookie(name) {

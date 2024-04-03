@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phishing Link Detector - Link History</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center content horizontally */
+    }
+    h1 {
+      color: #1478c4; /* shade of blue */
+      font-weight: 400;
+      margin: 10px 0; /* Add margin top and bottom */
+    }
+    .logo {
+      height: 50px;
+      width: 50px;
+      align-self: flex-start; /* Align logo to the top left corner */
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+     
+    }
+    li {
+        margin-bottom: 20px; /* Increase the margin bottom for more vertical space between list items */
+        padding: 25px; /* Increase the padding to add more vertical space inside each list item */
+        background-color: #f0f0f0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
+      
+      
+      .link {
+        color: #1478c4; /* link color */
+        text-decoration: none;
+       
+      }
+      
+      .details {
+        color: #888;
+        display: flex; /* Make it a flex container */
+         /* Center items vertically */
+        margin-left: auto; /* Move it to the right */
+        margin-right: 10px; /* Add some space between username and result */
+      }
+      
+      .timestamp {
+        color: #888;
+        font-size: 0.9em;
+        margin-left: 45px; /* Add some space between elements */
+      }
+      
+    .search-bar {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    .back-btn,
+    .clear-btn {
+      padding: 10px 20px;
+      background-color: #1478c4; /* same shade of blue */
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .back-btn:hover,
+    .clear-btn:hover {
+      background-color: #0f5f9b; /* slightly darker shade on hover */
+    }
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%; /* Ensure buttons span full width */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logo.png" alt="Logo" class="logo">
+    <h1>Link History</h1>
+    <input type="text" class="search-bar" placeholder="Search in history...">
+    <ul id="linkList">
+      <!-- Links with timestamps and usernames will be dynamically added here -->
+    </ul>
+    <div class="button-container">
+      <a href="/" class="back-btn">Back</a>
+      <a href="#" class="clear-btn">Clear History</a>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const linkList = document.getElementById("linkList");
+      const searchBar = document.querySelector(".search-bar");
+
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Check if the cookie contains the CSRF token
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+      // Function to fetch link history from backend API
+      // Fetch link history data using AJAX
+function fetchLinkHistory() {
+    // Get the CSRF token from the cookie
+    const csrftoken = getCookie('csrftoken');
+
+    // Make the AJAX request
+    fetch("http://127.0.0.1:8000/gethistory", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-type": "application/json",
+            "X-CSRFToken": csrftoken,
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to fetch link history");
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Clear existing list items
+        linkList.innerHTML = "";
+        // Display link history
+        data.forEach(entry => {
+            const li = document.createElement("li");
+
+            const link = document.createElement("a");
+            link.classList.add("link");
+            link.textContent = entry.url.substring(0, 25);
+            link.target = "_blank"; // Open link in a new tab
+
+            const username = document.createElement("span");
+            username.classList.add("details");
+            username.textContent = `Username: ${entry.username}`;
+
+            const phishingResult = document.createElement("span");
+              phishingResult.classList.add("details");
+              phishingResult.textContent = entry.isPhishing ? "Result: Phishing" : "Result: Not Phishing";
+
+            const timestamp = document.createElement("span");
+            timestamp.classList.add("timestamp");
+            timestamp.textContent = `Timestamp: ${new Date(entry.time_stamp).toLocaleString()}`;
+
+            li.appendChild(link);
+            li.appendChild(username);
+            li.appendChild(phishingResult);
+            li.appendChild(timestamp);
+
+            linkList.appendChild(li);
+        });
+    })
+    .catch(error => {
+        console.error("Error fetching link history:", error.message);
+    });
+}
+
+
+      // Initial fetch of link history when the page loads
+      fetchLinkHistory();
+
+      // Function to filter links based on search input
+      searchBar.addEventListener("input", function() {
+        const searchText = this.value.toLowerCase();
+        const links = document.querySelectorAll("li"); // Query for list items directly
+        
+        links.forEach(listItem => {
+          const linkText = listItem.querySelector(".link").textContent.toLowerCase(); // Query for link text inside list item
+          const usernameText = listItem.querySelector(".details").textContent.toLowerCase(); // Query for username text inside list item
+          const phishingResultText = listItem.querySelector(".details").textContent.toLowerCase(); // Query for phishing result text inside list item
+          
+          if (linkText.includes(searchText) || usernameText.includes(searchText) || phishingResultText.includes(searchText)) {
+            listItem.style.display = "flex";
+          } else {
+            listItem.style.display = "none";
+          }
+        });
+      });
+
+      // Clear history button functionality
+      const clearBtn = document.querySelector(".clear-btn");
+      clearBtn.addEventListener("click", function() {
+        // Perform operation to clear history, e.g., send request to backend
+        // For demonstration, let's just clear the displayed list
+        linkList.innerHTML = "";
+      });
+    });
+  </script>
+</body>
+</html>
+

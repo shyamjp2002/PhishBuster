@@ -12,4 +12,7 @@ urlpatterns = [
     path('usecases',views.usecases, name='usecases'),
     path('info',views.info, name='info'),
     path('home1',views.home1, name='home1'),
+    path('urlhistory',views.urlhistory, name='urlhistory'),
+    path('gethistory',views.gethistory, name='gethistory'),
+    path('reporturl', views.reporturl, name='reporturl'),
 ]
