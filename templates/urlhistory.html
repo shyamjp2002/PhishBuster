@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +12,7 @@
       padding: 0;
       background-color: #f4f4f4;
     }
-    .container {
+    .container1 {
       max-width: 800px;
       margin: 20px auto;
       padding: 20px;
@@ -97,9 +98,85 @@
       width: 100%; /* Ensure buttons span full width */
     }
   </style>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>Phishbuster</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+  <!-- Favicons -->
+  <link href="{% static '/assets/img/mainlogo.jpeg' %}" rel="icon">
+  <link href="{% static 'assets/img/mainlogo.jpeg' %}" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Krub:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+    rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/icofont/icofont.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/owl.carousel/assets/owl.carousel.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/venobox/venobox.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+
+  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+  <header id="header" class="fixed-top">
+    <div class="container d-flex align-items-center">
+
+      <h1 class="logo mr-auto"><a href="/">PhishB</a></h1>
+      <!-- Uncomment below if you prefer to use an image logo -->
+      <!-- <a href="index.html" class="logo mr-auto"><img src="assets/img/mainlogo.jpeg" alt="" class="img-fluid"></a>-->
+
+      <nav class="nav-menu d-none d-lg-block">
+        <ul>
+          <li class="active"><a href="/">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="/usecases" target="_blank" rel="no-openner no-referrer">Usecases</a></li>
+          <li class="drop-down"><a href="/info">Resources</a>
+            <ul>
+              <li class="drop-down"><a href="#">Report Phishing Cases</a>
+                <ul>
+                  <li><a href="https://safebrowsing.google.com/safebrowsing/report_phish/?hl=en">Google Safe
+                      Browsing</a></li>
+                  <li><a href="https://support.google.com/websearch/answer/106318">Google Support</a></li>
+                </ul>
+              </li>
+              <li class="drop-down"><a href="#">Phishing Websites</a>
+                <ul>
+                  <li><a href="https://www.phishingbox.com/phishing-iq-test">Phishingbox</a></li>
+                  <li><a href="https://www.intradyn.com/phishing-quiz/">Intradyn</a></li>
+                  <!-- <li><a href="https://vadasecure.com/en/blog/anatomy-of-a-phishing-email">Vadasecure</a></li> -->
+                </ul>
+              </li>
+              <!-- <li><a href="#">For Future Reference</a></li> -->
+            </ul>
+          </li>
+          <li class="drop-down"><a>Profile</a>
+            <ul>
+            <li><a href="/profile">View Profile</a></li>
+            <li><a href="/signout">Logout</a></li>
+            </ul>
+          </li>
+          <!-- <li><a href="#">Future Reference</a></li> -->
+
+        </ul>
+      </nav><!-- .nav-menu -->
+
+      <a href="{% static 'assets/resources/no fall maga cyber security eBook.pdf' %}" class="get-started-btn scrollto"
+        download="nofallmagaguide">Download Guide <i class='bx bxs-download'></i></a>
+
+    </div>
+  </header><!-- End Header -->
+  <div class="container1">
     <img src="logo.png" alt="Logo" class="logo">
     <h1>Link History</h1>
     <input type="text" class="search-bar" placeholder="Search in history...">

@@ -19,6 +19,26 @@ from .forms import PredictionForm
 from django.utils import timezone
 from .models import PredictionHistory, ReportedURL
 import uuid
+import json
+import requests
+import urllib
+
+# You may need to install Requests pip
+# python -m pip install requests
+
+class IPQS:
+    key = 'YVfcYmF2oEFTThWcudSjhYxy07H1D97i'
+    def malicious_url_scanner_api(self, url: str, vars: dict = {}) -> dict:
+        url = 'https://www.ipqualityscore.com/api/json/url/%s/%s' % (self.key, urllib.parse.quote_plus(url))
+        x = requests.get(url, params = vars)
+        print(x.text)
+        return (json.loads(x.text))
+
+
+
+
+
+
 
 
 
@@ -28,8 +48,8 @@ import uuid
 def home(request):
     return render(request, 'index.html')
   
-def home1(request):
-    return render(request, 'home1.html')
+def welcome(request):
+    return render(request, 'welcomepage.html')
   
 def usecases(request):
     return render(request, 'usecases.html')
@@ -73,6 +93,32 @@ def reporturl(request):
     else:
         # Handle other HTTP methods if needed
         return HttpResponseNotAllowed(['POST'])
+
+@login_required(login_url='/signin')      
+def profile(request):
+    # Assuming you have a User model associated with your users
+    
+    
+    # Fetching user-related data
+    username = request.user.username
+    email = request.user.email
+    
+    # Counting predicted URLs for the current user
+    predicted_urls_count = PredictionHistory.objects.filter(username=username).count()
+    
+    # Counting reported URLs for the current user
+    reported_urls_count = ReportedURL.objects.filter(username=username).count()
+    
+    # Passing data to the template context
+    context = {
+        'username': username,
+        'email': email,
+        'predicted_urls_count': predicted_urls_count,
+        'reported_urls_count': reported_urls_count
+    }
+    print(context)
+    
+    return render(request, 'profile.html', context)
 
   
 
@@ -126,6 +172,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 
 def signin(request):
+    if request.user.is_authenticated:
+        return redirect('home')
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -136,7 +184,13 @@ def signin(request):
         if user is not None:
             login(request, user)  # Pass the user object to the login function
             print("User logged in")
-            return redirect('home')
+            next_url = request.GET.get('next')
+            print(next_url)
+            if next_url:
+                return redirect(next_url)  # Redirect to the URL specified in 'next'
+            else:
+                return redirect('home')  # Fallback redirection if 'next' is not specified
+            
         else:
             messages.error(request, "Invalid username or password")
             print("User not logged in")
@@ -163,8 +217,20 @@ def predict(request):
         js = json.loads(request.body.decode('utf-8'))
         url = js.get('url')
         print("URL:", url) 
-        
-        
+        strictness = 0
+
+    #custom feilds
+        additional_params = {
+        'strictness' : strictness
+    }
+        ipqs = IPQS()
+        result = ipqs.malicious_url_scanner_api(url, additional_params)
+        if 'success' in result and result['success'] == True:
+          print("Result score : ",result['risk_score'])
+          if result['suspicious'] == True or result['malware'] == True or result['phishing'] == True or result['risk_score']>85:
+            prediction = 1
+          else:
+            prediction = 0
         # Load the trained model
         cls = joblib.load('xgboost.sav')
         
@@ -207,7 +273,6 @@ def predict(request):
         
         # Make predictions using the trained model
         ans = cls.predict([lis])
-        prediction = int(ans[0])
         lis.insert(0, getDomain(url))
         print(ans)  # Print the prediction
         print(lis)
@@ -215,7 +280,13 @@ def predict(request):
         data = {
         "success": True,
         "detection": lis,
-        "prediction": prediction
+        "prediction": prediction,
+        "risk_score": result['risk_score'],
+        "domain_trust": result['domain_trust'],
+        "ip_address": result['ip_address'],
+        "domain_rank": result['domain_rank'],
+        "root_domain": result['root_domain'],
+        "category": result['category'],
     }
         print(data)
         

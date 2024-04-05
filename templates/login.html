@@ -29,7 +29,7 @@
         <div class="form-content">
           <div class="login-form">
             <div class="title">Login</div>
-          <form action="/signin" method="post">
+            <form action="/signin{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" method="post">
             {% csrf_token %}
             {% for message in messages %}
               <div class="alert alert-{{ message.tags }}">

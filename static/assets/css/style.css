@@ -389,10 +389,11 @@ h1, h2, h3, h4, h5, h6 {
   background: white;
   border-bottom: 2px solid white;
   text-align: center;
+  top: -50px;
 }
 
 #hero .container {
-  padding-top: 180px;
+  padding-top: 50px;
 }
 
 #hero h1 {
@@ -404,6 +405,7 @@ h1, h2, h3, h4, h5, h6 {
   color: #141d2b;
   width: 60%;
   color: #2d405f;
+  margin-top: -384px;
 }
 
 #hero h2 {
