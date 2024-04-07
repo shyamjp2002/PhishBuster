@@ -246,10 +246,10 @@ function fetchLinkHistory() {
             const username = document.createElement("span");
             username.classList.add("details");
             username.textContent = `Username: ${entry.username}`;
-
+            console.log(entry.isPhishing);
             const phishingResult = document.createElement("span");
               phishingResult.classList.add("details");
-              phishingResult.textContent = entry.isPhishing ? "Result: Phishing" : "Result: Not Phishing";
+              phishingResult.textContent = entry.is_phishing ? "Result: Phishing" : "Result: Not Phishing";
 
             const timestamp = document.createElement("span");
             timestamp.classList.add("timestamp");

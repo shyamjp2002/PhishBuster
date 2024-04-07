@@ -23,6 +23,29 @@ import json
 import requests
 import urllib
 
+import requests
+from datetime import datetime
+
+def whoapi_request(domain, r, apikey) -> tuple:
+    res = requests.get('https://api.whoapi.com', dict(
+        domain=domain,
+        r=r,
+        apikey=apikey))
+
+    if res.status_code == 200:
+        data = res.json()
+        if int(data['status']) == 0:
+            date_created = datetime.strptime(data['date_created'], '%Y-%m-%d %H:%M:%S')
+            date_expires = datetime.strptime(data['date_expires'], '%Y-%m-%d %H:%M:%S')
+            return date_created, date_expires
+        else:
+            raise ValueError("API reports error: " + data['status_desc'])
+    else:
+        raise Exception('Unexpected status code %d' % res.status_code)
+      
+r = "whois"
+apikey = "1284da9f167a3d825af1e60b5d71696e"
+
 # You may need to install Requests pip
 # python -m pip install requests
 
@@ -254,10 +277,11 @@ def predict(request):
         except:
             dns = 1
         
+        date_created, date_expires = whoapi_request(result['root_domain'], r, apikey)
         # Append domain-related features to the list
         lis.append(dns)
-        lis.append(1 if dns == 1 else domainAge(domain_name))
-        lis.append(1 if dns == 1 else domainEnd(domain_name))
+        lis.append(domainAge(date_created, date_expires))
+        lis.append(domainEnd(date_expires))
         
         # Extract HTML & JavaScript-based features
         try:
@@ -273,7 +297,7 @@ def predict(request):
         
         # Make predictions using the trained model
         ans = cls.predict([lis])
-        lis.insert(0, getDomain(url))
+        lis.insert(0, result['root_domain'])
         print(ans)  # Print the prediction
         print(lis)
         print(prediction)
@@ -398,47 +422,32 @@ def prefixSuffix(url):
         return 0            # legitimate
     
 # 13.Survival time of domain: The difference between termination time and creation time (Domain_Age)
-def domainAge(domain_name):
-  creation_date = domain_name.creation_date
-  expiration_date = domain_name.expiration_date
-  if (isinstance(creation_date,str) or isinstance(expiration_date,str)):
-    try:
-      creation_date = datetime.strptime(creation_date,'%Y-%m-%d')
-      expiration_date = datetime.strptime(expiration_date,"%Y-%m-%d")
-    except:
-      return 1
-  if ((expiration_date is None) or (creation_date is None)):
-      return 1
-  elif ((type(expiration_date) is list) or (type(creation_date) is list)):
-      return 1
-  else:
-    ageofdomain = abs((expiration_date - creation_date).days)
-    if ((ageofdomain/30) < 6):
-      age = 1
+def domainAge(creation_date, expiration_date):
+    if ((expiration_date is None) or (creation_date is None)):
+        return 1
+    elif ((type(expiration_date) is list) or (type(creation_date) is list)):
+        return 1
     else:
-      age = 0
-  return age
+        ageofdomain = abs((expiration_date - creation_date).days)
+        if ((ageofdomain/30) < 6):
+            age = 1
+        else:
+            age = 0
+    return age
 
-# 14.End time of domain: The difference between termination time and current time (Domain_End)
-def domainEnd(domain_name):
-  expiration_date = domain_name.expiration_date
-  if isinstance(expiration_date,str):
-    try:
-      expiration_date = datetime.strptime(expiration_date,"%Y-%m-%d")
-    except:
-      return 1
-  if (expiration_date is None):
-      return 1
-  elif (type(expiration_date) is list):
-      return 1
-  else:
-    today = datetime.now()
-    end = abs((expiration_date - today).days)
-    if ((end/30) < 6):
-      end = 0
+def domainEnd(expiration_date):
+    if (expiration_date is None):
+        return 1
+    elif (type(expiration_date) is list):
+        return 1
     else:
-      end = 1
-  return end
+        today = datetime.now()
+        end = abs((expiration_date - today).days)
+        if ((end/30) > 6):
+            end = 0
+        else:
+            end = 1
+    return end
 
 # 15. IFrame Redirection (iFrame)
 def iframe(response):
